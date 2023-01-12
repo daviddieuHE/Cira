@@ -19,9 +19,6 @@ table {
     border: 1px solid lightgrey;
   }
 
-
- 
-
   .tableau{
     display: flex;
     flex-direction: column;
@@ -32,5 +29,4 @@ table {
   .heading-container{
     padding: 20px;
     font-weight: bold;
-    font-style: inherit;
   }

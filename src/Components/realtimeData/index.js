@@ -1,9 +1,18 @@
 import StartFirebase from "../firebaseConfig";
 import React, { Children } from "react";
-import {ref, onValue} from 'firebase/database';
+import {ref, onValue, update, set, Database} from 'firebase/database';
 import {Table} from 'react-bootstrap';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+
 
 const db = StartFirebase();
+
+
+function changeStatus(key){
+alert('issues/'+key);
+}
 
 export class RealtimeData extends React.Component{
     constructor(){
@@ -26,10 +35,10 @@ export class RealtimeData extends React.Component{
             this.setState({tableData: records}) 
         });
     }
-
+    
     render(){
         return(
-            <Table>
+            <Table className="container w-75" bordered striped variant="light">
                 <thead>
                     <tr>
                             <th>#</th>
@@ -51,7 +60,8 @@ export class RealtimeData extends React.Component{
                             <td>{row.data.description}</td>
                             <td>{row.data.date}</td>
                             <td>{row.data.geolocation}</td>
-                            <td>{row.data.status}</td>
+                            <td><button type="submit" onClick={() => { changeStatus(row.key) }}>{row.data.status}</button></td>
+                            
                         </tr>
                         )
                     })}

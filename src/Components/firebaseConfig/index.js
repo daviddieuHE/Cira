@@ -1,5 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from 'firebase/database';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
 
 
 function StartFirebase(){
@@ -14,8 +17,14 @@ function StartFirebase(){
     };
 
     const app = initializeApp(firebaseConfig);
+
+
     return getDatabase(app);
 
 }
 
+
+
 export default StartFirebase;
+
+
