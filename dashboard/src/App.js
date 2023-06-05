@@ -2,6 +2,7 @@ import {
   getCoreRowModel,
   useReactTable,
   flexRender,
+  getFilteredRowModel,
 } from "@tanstack/react-table";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -13,35 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from "./components/ui/table";
-import { Button } from "./components/ui/button";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "./components/ui/dialog";
-import { DialogHeader } from "./components/ui/dialog";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "./components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogCancel,
-  AlertDialogAction,
-  AlertDialogHeader,
-  AlertDialogFooter,
-} from "./components/ui/alert-dialog";
-import {
-  AlertDialogDescription,
-  AlertDialogTitle,
-} from "@radix-ui/react-alert-dialog";
+import { StatusCell } from "./components/table/StatusCell";
+import { Dialog, DialogContent, DialogTrigger } from "./components/ui/dialog";
+import { useState } from "react";
+import { Checkbox } from "./components/ui/checkbox";
 
 const category = {
   depot_sauvage: "Dépôt sauvage",
@@ -50,15 +26,16 @@ const category = {
   autre: "Autre",
 };
 
-const status = {
-  signale: "Signalé",
-  pris_en_charge: "Pris en charge",
-  taite: "Traité",
-};
-
 function App() {
+  const [columnFilters, setColumnFilters] = useState([
+    {
+      id: "archived",
+      value: false,
+    },
+  ]);
+
   const reportsQuery = useQuery(["reports"], async () => {
-    const data = await fetch("/api/reports").then((res) => res.json());
+    const data = await fetch("/api/allreports").then((res) => res.json());
     return data.map(({ created_at, ...report }) => ({
       ...report,
       date: new Date(created_at).toLocaleString("fr-FR"),
@@ -126,7 +103,16 @@ function App() {
       header: "Photo",
       cell: ({ row }) => {
         const uri = row.getValue("picture");
-        return <img src={uri} alt="report" style={{ width: 100 }} />;
+        return (
+          <Dialog>
+            <DialogTrigger>
+              <img src={uri} alt="report" style={{ width: 100 }} />
+            </DialogTrigger>
+            <DialogContent>
+              <img src={uri} alt="report" style={{ height: "70vh" }} />
+            </DialogContent>
+          </Dialog>
+        );
       },
     },
     {
@@ -137,76 +123,41 @@ function App() {
       accessorKey: "status",
       header: "Statut",
       cell: ({ row }) => {
-        const label = status[row.getValue("status")];
         return (
-          <div>
-            <div>{label}</div>
-          </div>
+          <StatusCell
+            currentStatus={row.getValue("status")}
+            id={row.getValue("id")}
+            statusMutation={statusMutation}
+          />
         );
       },
     },
     {
-      accessorKey: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const id = row.getValue("id");
+      accessorKey: "archived",
+      header: () => {
         return (
-          <div className="flex flex-row gap-2">
-            <Dialog>
-              <DialogTrigger>
-                <Button>Mettre à jour</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Mettre à jour</DialogTitle>
-                  <DialogDescription>
-                    <div className="w-full flex justify-center items-center">
-                      <Select
-                        onValueChange={(value) => {
-                          statusMutation.mutate(
-                            { id, status: value },
-                            { onSuccess: () => reportsQuery.refetch() }
-                          );
-                        }}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="signale">Signalé</SelectItem>
-                          <SelectItem value="pris_en_charge">
-                            Pris en charge
-                          </SelectItem>
-                          <SelectItem value="traite">Traité</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </DialogDescription>
-                </DialogHeader>
-              </DialogContent>
-            </Dialog>
-            <div>
-              <AlertDialog>
-                <AlertDialogTrigger>
-                  <Button variant="destructive">Archiver</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Archiver</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Cette action est irréversible, voulez-vous continuer ?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => archiveMutation.mutate({ id }, {onSuccess: () => reportsQuery.refetch()})}>
-                      Confirmer
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+          <div className="flex items-center gap-5">
+            <div>Archived</div>
+            <Checkbox
+              checked={table.getColumn("archived").getFilterValue()}
+              onCheckedChange={(checked) => {
+                table.getColumn("archived").setFilterValue(checked);
+              }}
+            />
           </div>
+        );
+      },
+      cell: ({ row }) => {
+        return (
+          <Checkbox
+            checked={row.getValue("archived")}
+            onCheckedChange={(checked) => {
+              archiveMutation.mutate(
+                { id: row.getValue("id"), archived: checked },
+                { onSuccess: () => reportsQuery.refetch() }
+              );
+            }}
+          />
         );
       },
     },
@@ -216,6 +167,11 @@ function App() {
     columns,
     data: reportsQuery.data || [],
     getCoreRowModel: getCoreRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      columnFilters,
+    },
   });
 
   return (
@@ -254,7 +210,7 @@ function App() {
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                {reportsQuery.isLoading ? "Loading..." : "No data to display"}
               </TableCell>
             </TableRow>
           )}
