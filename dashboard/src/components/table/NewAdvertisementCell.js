@@ -51,6 +51,7 @@ export const NewAdvertisementCell = () => {
                 name="start_date"
                 type="date"
                 placeholder="Start date"
+                defaultValue={new Date().toISOString().split("T")[0]}
               />
             </div>
             <div className="flex flex-1 flex-col gap-2">
