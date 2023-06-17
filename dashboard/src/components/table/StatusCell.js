@@ -8,6 +8,7 @@ import {
 } from "../ui/select";
 import { Button } from "../ui/button";
 import { useQueryClient } from "@tanstack/react-query";
+import { STATUS } from "../../pages/reports";
 
 export const StatusCell = ({ currentStatus, id, statusMutation }) => {
   const [status, setStatus] = useState(currentStatus);
@@ -25,9 +26,11 @@ export const StatusCell = ({ currentStatus, id, statusMutation }) => {
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="signale">Signalé</SelectItem>
-          <SelectItem value="pris_en_charge">Pris en charge</SelectItem>
-          <SelectItem value="traite">Traité</SelectItem>
+          {Object.entries(STATUS).map(([value, label]) => (
+            <SelectItem key={value} value={value}>
+              {label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
       {status !== currentStatus && (
