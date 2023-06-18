@@ -9,7 +9,8 @@ const bcrypt = require("bcrypt");
 // On crée un middleware pour l'upload d'image avec multer
 const imageUpload = multer();
 
-// Route pour signaler un incident. L'image est uploadée avec multer.
+// POST /report: Signaler un incident avec une image
+// Cette méthode reçoit les données du formulaire, upload l'image et insère le signalement dans la base de données.
 router.post("/report", imageUpload.single("image"), async (req, res) => {
   const { date, longitude, latitude, description, category } = req.body;
   const file = req.file;
@@ -19,7 +20,7 @@ try {
       'INSERT INTO reports (created_at, "user", latitude, longitude, picture, description, category) VALUES ($1, $2, $3, $4, $5, $6, $7)',
       [
         date,
-        1, // Utilisateur hardcodé pour l'instant
+        1, 
         latitude,
         longitude,
         `data:${file.mimetype};base64, ${file.buffer.toString("base64")}`,
@@ -36,7 +37,9 @@ try {
   }
 });
 
-// Route pour récupérer tous les signalements non archivés de l'utilisateur 1
+
+// GET /reports: Récupérer tous les signalements non archivés 
+// Cette méthode exécute une requête SQL pour récupérer tous les signalements non archivés de l'utilisateur 1 et renvoie ces données en JSON.
 router.get("/reports", async (req, res) => {
   try {
     const result = await client.query(
@@ -50,6 +53,9 @@ router.get("/reports", async (req, res) => {
   }
 });
 
+
+// GET /allreports: Récupérer tous les signalements 
+// Cette méthode exécute une requête SQL pour récupérer tous les signalements et renvoie ces données en JSON.
 router.get("/allreports", checkAuth, async (req, res) => {
   try {
     const result = await client.query(
@@ -62,6 +68,9 @@ router.get("/allreports", checkAuth, async (req, res) => {
   }
 });
 
+
+// POST /status: Mettre à jour le statut d'un signalement
+// Cette méthode reçoit l'ID d'un signalement et son nouveau statut, puis met à jour ce signalement dans la base de données.
 router.post("/status", checkAuth, async (req, res) => {
   const { id, status } = req.body;
   try {
@@ -76,6 +85,9 @@ router.post("/status", checkAuth, async (req, res) => {
   }
 });
 
+
+// POST /archive: Archiver un signalement
+// Cette méthode reçoit l'ID d'un signalement et une valeur booléenne indiquant si le signalement doit être archivé, puis met à jour ce signalement dans la base de données.
 router.post("/archive", checkAuth, async (req, res) => {
   const { id, archived } = req.body;
   try {
@@ -90,6 +102,9 @@ router.post("/archive", checkAuth, async (req, res) => {
   }
 });
 
+
+// GET /alladvertisements: Récupérer toutes les annonces
+// Cette méthode exécute une requête SQL pour récupérer toutes les annonces et renvoie ces données en JSON.
 router.get("/alladvertisements", checkAuth, async (req, res) => {
   try {
     const result = await client.query(
@@ -102,6 +117,10 @@ router.get("/alladvertisements", checkAuth, async (req, res) => {
   }
 });
 
+
+
+// GET /advertisements: Récupérer toutes les annonces actives
+// Cette méthode exécute une requête SQL pour récupérer toutes les annonces actives et renvoie ces données en JSON.
 router.get("/advertisements", async (req, res) => {
   try {
     const result = await client.query(
@@ -115,6 +134,9 @@ router.get("/advertisements", async (req, res) => {
   }
 });
 
+
+// POST /advertisement: Créer une nouvelle annonce
+// Cette méthode reçoit les données d'une nouvelle publicité et insère cette annonce dans la base de données.
 router.post("/advertisement", checkAuth, async (req, res) => {
   const { title, start_date, end_date } = req.body;
 
@@ -134,6 +156,9 @@ router.post("/advertisement", checkAuth, async (req, res) => {
   }
 });
 
+
+// POST /advertisement/disable: Désactiver une publicité
+// Cette méthode reçoit l'ID d'une publicité et une valeur booléenne indiquant si la publicité doit être désactivée, puis met à jour cette publicité dans la base de données.
 router.post("/advertisement/disable", checkAuth, async (req, res) => {
   const { id, disabled } = req.body;
   try {
@@ -148,6 +173,9 @@ router.post("/advertisement/disable", checkAuth, async (req, res) => {
   }
 });
 
+
+// POST /advertisement/archive: Archiver une publicité
+// Cette méthode reçoit l'ID d'une publicité et une valeur booléenne indiquant si la publicité doit être archivée, puis met à jour cette publicité dans la base de données.
 router.post("/advertisement/archive", checkAuth, async (req, res) => {
   const { id, archived } = req.body;
   try {
@@ -162,6 +190,9 @@ router.post("/advertisement/archive", checkAuth, async (req, res) => {
   }
 });
 
+
+// POST /login: Se connecter en tant qu'administrateur
+// Cette méthode reçoit un nom d'utilisateur et un mot de passe, vérifie qu'ils correspondent à un utilisateur avec le rôle 'admin' dans la base de données, et si c'est le cas, renvoie un cookie avec un token JWT
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
